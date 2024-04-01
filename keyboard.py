@@ -1,28 +1,40 @@
 from pynput import keyboard
+from pyperclip import paste as getClipboard
+from time import sleep
 
-def on_press(key):
-    try:
-        print('alphanumeric key {0} pressed'.format(
-            key.char))
-    except AttributeError:
-        print('special key {0} pressed'.format(
-            key))
+c = keyboard.Controller()
+spam = False
+msg = ""
+count = 0
 
-def on_release(key):
-    print('{0} released'.format(
-        key))
-    if key == keyboard.Key.esc:
-        # Stop listener
-        return False
+def toggle(key):
+    global spam
+    global msg
+    if key != keyboard.Key.shift_l:
+        return
+    msg = getClipboard()
+    spam = not spam
+
+
+def send():
+    global c
+
+    c.press(keyboard.Key.cmd)
+    c.press('v')
+    c.release('v')
+    c.release(keyboard.Key.cmd)
+
+    c.tap(keyboard.Key.enter)
+    sleep(0.1)
 
 # Collect events until released
-with keyboard.Listener(
-        on_press=on_press,
-        on_release=on_release) as listener:
-    listener.join()
-
-# ...or, in a non-blocking fashion:
 listener = keyboard.Listener(
-    on_press=on_press,
-    on_release=on_release)
+    on_press=toggle)
 listener.start()
+
+while 1:
+    if not spam:
+        continue
+    send()
+    count += 1
+    print(count)
